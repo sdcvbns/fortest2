@@ -24,19 +24,18 @@
       text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.8);
     }
 
-    /* إطار الكاميرا المحصن */
     .camera-vault {
       width: 240px; height: 240px; margin: 0 auto 20px;
       border-radius: 50%; border: 2px solid #333;
       position: relative; overflow: hidden; background: #000;
+      transition: all 0.5s ease;
     }
 
-    .camera-vault.locked { border-color: var(--security-red); }
+    .camera-vault.locked { border-color: var(--security-red); box-shadow: 0 0 25px var(--security-red); }
     .camera-vault.verified { border-color: var(--security-green); box-shadow: 0 0 25px var(--security-green); }
 
     video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
-    /* شبكة المسح الرقمي */
     .digital-grid {
       position: absolute; inset: 0;
       background: linear-gradient(rgba(0, 255, 65, 0.1) 1px, transparent 1px),
@@ -84,15 +83,15 @@
     const status = document.getElementById('status');
     const vault = document.getElementById('vault');
     const scanLine = document.getElementById('scanLine');
+    let currentStream = null;
 
-    // محاكاة قاعدة بيانات مشفرة للملامح
     let isEnrolled = localStorage.getItem('face_hash') !== null;
 
     async function init() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            status.innerText = isEnrolled ? "نظام التحقق نشط: وجهك مطلوب" : "النظام غير مفعل: يرجى التسجيل";
+            currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = currentStream;
+            status.innerText = isEnrolled ? "نظام التحقق نشط: جاري التعرف..." : "يرجى تسجيل بصمة الوجه أولاً";
             
             if(isEnrolled) {
                 setTimeout(startVerification, 2000);
@@ -102,63 +101,63 @@
         }
     }
 
-    // 1. عملية التسجيل (Enrollment) - تمنع دخول أي وجه آخر لاحقاً
-    function startEnrollment() {
-        status.innerText = "جاري تحليل ملامح الوجه... (1/3)";
-        scanLine.style.display = "block";
-        gsap.to(scanLine, { top: "100%", duration: 1.5, repeat: 5, yoyo: true });
-
-        setTimeout(() => {
-            status.innerText = "تشفير البيانات الحيوية... (2/3)";
-            // هنا يتم تخزين بصمة "وهمية" فريدة لهذا الجهاز
-            localStorage.setItem('face_hash', 'SECURE_HASH_' + Math.random());
-        }, 3000);
-
-        setTimeout(() => {
-            status.innerText = "اكتمل التسجيل! تم قفل النظام على وجهك.";
-            vault.classList.add('verified');
-            setTimeout(() => location.reload(), 1500);
-        }, 6000);
+    // وظيفة إغلاق الكاميرا فور النجاح
+    function stopCamera() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
     }
 
-    // 2. عملية التحقق (Verification) - تمنع الانتحال
+    function startEnrollment() {
+        status.innerText = "جاري تحليل ملامح الوجه...";
+        scanLine.style.display = "block";
+        gsap.to(scanLine, { top: "100%", duration: 1.5, repeat: 3, yoyo: true });
+
+        setTimeout(() => {
+            localStorage.setItem('face_hash', 'SECURE_USER_VALID');
+            status.innerText = "تم حفظ البصمة بنجاح! ✅";
+            vault.classList.add('verified');
+            setTimeout(() => location.reload(), 1500);
+        }, 5000);
+    }
+
     function startVerification() {
-        status.innerText = "جاري مطابقة الوجه بالبصمة المسجلة...";
+        status.innerText = "جاري مطابقة الوجه بالبصمة...";
         scanLine.style.display = "block";
         gsap.to(scanLine, { top: "100%", duration: 1, repeat: 3, yoyo: true });
 
         setTimeout(() => {
-            // منطق أمني: لا يفتح إلا إذا وجد البصمة المخزنة
-            if(localStorage.getItem('face_hash')) {
-                status.innerText = "تمت المطابقة بنجاح ✅";
+            if(localStorage.getItem('face_hash') === 'SECURE_USER_VALID') {
+                status.innerText = "تم التحقق بنجاح! مرحباً بك ✅";
                 status.style.color = "var(--security-green)";
+                vault.classList.remove('locked');
                 vault.classList.add('verified');
+                
+                // --- الحل هنا: إغلاق الكاميرا وإخفاء الإطار الجمالي ---
+                stopCamera();
+                gsap.to(vault, { height: 0, opacity: 0, marginBottom: 0, duration: 0.8, ease: "power2.inOut" });
+                
                 document.getElementById('setupActions').style.display = "none";
                 document.getElementById('authForm').style.display = "block";
             } else {
-                status.innerText = "فشل التحقق: وجه غير معروف!";
+                status.innerText = "فشل التحقق: الوجه غير مطابق! ❌";
                 status.style.color = "var(--security-red)";
                 vault.classList.add('locked');
             }
         }, 4000);
     }
 
-    // 3. منع الانتحال عبر الهروب الذكي
     const entryBtn = document.getElementById('entryBtn');
     const passInp = document.getElementById('passCode');
-
     entryBtn.addEventListener('mouseenter', () => {
         if (!passInp.value.trim()) {
-            gsap.to(entryBtn, { 
-                x: (Math.random() - 0.5) * 250, 
-                y: (Math.random() - 0.5) * 150, 
-                duration: 0.2 
-            });
+            gsap.to(entryBtn, { x: (Math.random()-0.5)*200, y: (Math.random()-0.5)*150, duration: 0.2 });
         }
     });
 
     function resetSystem() {
-        if(confirm("سيتم مسح بصمة وجهك المسجلة نهائياً. هل أنت متأكد؟")) {
+        if(confirm("سيتم مسح بصمة وجهك المسجلة. هل أنت متأكد؟")) {
             localStorage.removeItem('face_hash');
             location.reload();
         }
