@@ -1,125 +1,311 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام مبيعات طالب - الحماية الذكية</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    :root { --primary: #00d2ff; --bg: #0a0e14; --success: #00ff41; }
-    body { background: var(--bg); color: white; font-family: 'Cairo', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .card { width: 90%; max-width: 400px; background: #161b22; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .video-wrap { width: 220px; height: 220px; margin: 0 auto 20px; border-radius: 50%; border: 3px solid #333; overflow: hidden; position: relative; background: #000; }
-    video, canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-    canvas { display: none; } /* لإخفاء المعالجة الخلفية */
-    .status { margin: 15px 0; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
-    .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: var(--primary); color: white; margin-top: 10px; }
-    #authForm { display: none; }
-    .error { color: #ff4b2b !important; }
-  </style>
-</head>
-<body>
-
-<div class="card">
-    <h3 id="title">نظام بصمة الوجه المطور</h3>
-    <div class="video-wrap" id="videoContainer">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="photoCanvas"></canvas>
-    </div>
-    <div class="status" id="status">جاري تشغيل النظام...</div>
-    
-    <div id="setupView">
-        <button class="btn" onclick="captureAndSave()">تسجيل بصمة وجهي الآن</button>
-    </div>
-
-    <div id="authForm">
-        <div style="background: rgba(0,210,255,0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-            <small>تم التحقق من الهوية ✅</small>
-        </div>
-        <input type="text" id="passCode" placeholder="أدخل كود التفعيل" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:none; text-align:center; background:#0d1117; color:white;">
-        <button class="btn" id="entryBtn">دخول النظام</button>
-        <p onclick="deleteFace()" style="color:#666; font-size:0.7rem; cursor:pointer; margin-top:10px;">حذف البصمة القديمة</p>
-    </div>
-</div>
-
-<script>
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photoCanvas');
-    const status = document.getElementById('status');
-    const setupView = document.getElementById('setupView');
-    const authForm = document.getElementById('authForm');
-    const ctx = canvas.getContext('2d');
-
-    let savedFaceData = localStorage.getItem('face_image_data');
-
-    // 1. تشغيل الكاميرا
-    async function startApp() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 300, height: 300 } });
-            video.srcObject = stream;
-            
-            if (savedFaceData) {
-                status.innerText = "تم العثور على بصمة.. جاري المطابقة تلقائياً";
-                setupView.style.display = 'none';
-                setTimeout(verifyFace, 3000); // انتظر 3 ثواني للمطابقة
-            } else {
-                status.innerText = "أهلاً بك! يرجى تسجيل وجهك أولاً.";
-            }
-        } catch (err) {
-            status.innerText = "فشل تشغيل الكاميرا. يرجى إعطاء الصلاحية.";
-            status.classList.add('error');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>البوابة الذكية - توجيه الطلاب</title>
+    <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        /* إعدادات المظهر الزجاجي ومنع النسخ التام */
+        * { 
+            box-sizing: border-box; 
+            user-select: none !important; 
+            -webkit-user-select: none !important; 
+            -moz-user-select: none !important; 
+            -ms-user-select: none !important;
+            -webkit-touch-callout: none !important;
         }
-    }
-
-    // 2. تسجيل البصمة (التقاط صورة وتحليل ملامحها الأساسية)
-    function captureAndSave() {
-        status.innerText = "جاري التقاط ملامح الوجه...";
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL('image/jpeg', 0.5); // ضغط الصورة
         
-        // حفظ الصورة في الذاكرة
-        localStorage.setItem('face_image_data', imageData);
-        status.innerText = "تم حفظ بصمة وجهك بنجاح! ✅";
-        setTimeout(() => location.reload(), 1500);
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white; 
+            margin: 0; 
+            padding: 20px 0;
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-    // 3. عملية التحقق الذكية
-    function verifyFace() {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const currentFrame = canvas.toDataURL('image/jpeg', 0.5);
+        .header { margin-bottom: 20px; text-align: center; width: 90%; }
+        .header h1 { color: #00d2ff; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); margin: 0; font-size: clamp(1.5rem, 4vw, 2.5rem); }
+        
+        .main-container {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: stretch;
+            gap: 20px; 
+            width: 95%; 
+            max-width: 1000px;
+        }
 
-        // محاكاة مقارنة البكسلات الأساسية (لضمان وجود شخص وليس فراغ)
-        if (currentFrame.length > 1000) { 
-            status.innerText = "تم التعرف عليك بنجاح! ✅";
-            status.style.color = "var(--success)";
+        /* حاوية الكاميرا المتجاوبة */
+        .camera-glass {
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 20px;
+            padding: 15px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: relative; 
+            width: 100%; 
+            max-width: 450px; 
+            aspect-ratio: 4/3; 
+            display: flex;
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden;
+        }
+        #video { border-radius: 15px; width: 100%; height: 100%; object-fit: cover; }
+        canvas { position: absolute; top: 15px; left: 15px; width: calc(100% - 30px); height: calc(100% - 30px); pointer-events: none; }
+
+        /* حاوية معلومات الطالب */
+        .info-glass {
+            background: rgba(0, 0, 0, 0.4); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 210, 255, 0.3); 
+            border-radius: 20px;
+            padding: 20px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 210, 255, 0.1);
+            width: 100%; 
+            max-width: 450px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center;
+        }
+        .info-glass h2 { color: #fff; margin-top: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
+        .data-row { 
+            margin: 10px 0; 
+            font-size: clamp(1rem, 2.5vw, 1.2rem); 
+            background: rgba(255,255,255,0.05); 
+            padding: 12px; 
+            border-radius: 10px; 
+        }
+        .highlight { color: #00d2ff; font-weight: bold; font-size: 1.2em; }
+        .highlight-seat { color: #ffcc00; font-weight: bold; font-size: 1.5em; text-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+        
+        #status { 
+            margin-top: 20px; 
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem); 
+            color: #aaa; 
+            text-align: center; 
+            width: 90%; 
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+        }
+        .loading { animation: pulse 1.5s infinite; color: #00d2ff !important; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
+
+    <div class="header">
+        <h1>البوابة الذكية للمقاعد الامتحانية</h1>
+    </div>
+
+    <div class="main-container">
+        <div class="camera-glass" id="video-container">
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+
+        <div class="info-glass" id="info-panel">
+            <h2>بيانات الطالب</h2>
+            <div class="data-row">الاسم: <span id="s-name" class="highlight">--</span></div>
+            <div class="data-row">الاختصاص: <span id="s-dept" class="highlight">--</span></div>
+            <div class="data-row">القاعة: <span id="s-room" class="highlight-seat">--</span></div>
+            <div class="data-row">المقعد: <span id="s-seat" class="highlight-seat">--</span></div>
+        </div>
+    </div>
+    
+    <div id="status" class="loading">جاري تهيئة النظام وتحميل مكتبة الذكاء الاصطناعي...</div>
+
+    <script>
+        // === أكواد الحماية الإضافية لمنع الاختراقات والنسخ ===
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+               (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+               (e.ctrlKey && e.key === 'u') || 
+               (e.ctrlKey && e.key === 'c')) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+
+        // === إعدادات النظام والرابط ===
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T-12TCX-479TCluhUQ9QQQa-KCdKFkJHPHJo_XMZ3FPkAQT9odJE7YZll1qcBfep/exec";
+        
+        const video = document.getElementById('video');
+        const statusDiv = document.getElementById('status');
+        let faceMatcher = null;
+        let isProcessing = false;
+
+        // 1. تحميل الموديلات وجلب بيانات الطلاب مع صائد الأخطاء
+        async function initialize() {
+            try {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+                
+                statusDiv.innerText = "جاري تحميل النماذج الذكية (1/2)...";
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+
+                statusDiv.innerText = "جاري الاتصال بقاعدة البيانات (2/2)...";
+                
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 'action': 'getStudents' })
+                });
+                
+                const responseText = await response.text();
+                let studentsData;
+                try {
+                    studentsData = JSON.parse(responseText);
+                } catch(e) {
+                    throw new Error("تأكد من نشر السكربت بصلاحية 'Anyone'. السيرفر يرفض الاتصال المباشر.");
+                }
+
+                if(studentsData.error) {
+                    throw new Error(studentsData.error);
+                }
+                
+                if(!studentsData || studentsData.length === 0) {
+                    statusDiv.innerText = "قاعدة البيانات فارغة أو لا يوجد طلاب بوجوه مسجلة.";
+                    statusDiv.classList.remove('loading');
+                    return;
+                }
+
+                const labeledDescriptors = studentsData.map(student => {
+                    const descriptorArray = new Float32Array(JSON.parse(student.faceData));
+                    const labelData = JSON.stringify({ id: student.id, name: student.name, dept: student.department });
+                    return new faceapi.LabeledFaceDescriptors(labelData, [descriptorArray]);
+                });
+
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
+                
+                statusDiv.innerText = "النظام جاهز. يرجى الوقوف أمام الكاميرا.";
+                statusDiv.classList.remove('loading');
+                startVideo();
+
+            } catch (error) {
+                console.error("تفاصيل الخطأ:", error);
+                statusDiv.innerText = "خطأ النظام: " + error.message;
+                statusDiv.classList.remove('loading');
+                statusDiv.style.color = "#ff4d4d";
+            }
+        }
+
+        // 2. تشغيل الكاميرا
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                .then(stream => { video.srcObject = stream; })
+                .catch(err => { statusDiv.innerText = "خطأ: تعذر الوصول إلى الكاميرا. تأكد من إعطاء الصلاحيات."; });
+        }
+
+        // 3. تحليل الوجوه والمطابقة المباشرة
+        video.addEventListener('play', () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            document.getElementById('video-container').append(canvas);
             
-            stopCamera();
-            setupView.style.display = 'none';
-            authForm.style.display = 'block';
-            document.getElementById('videoContainer').style.display = 'none';
-        } else {
-            status.innerText = "فشل التحقق: لا يوجد وجه مطابق! ❌";
-            status.classList.add('error');
-        }
-    }
+            const displaySize = { width: video.clientWidth, height: video.clientHeight };
+            faceapi.matchDimensions(canvas, displaySize);
 
-    // إيقاف الكاميرا نهائياً
-    function stopCamera() {
-        const stream = video.srcObject;
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
-    }
+            window.addEventListener('resize', () => {
+                const newSize = { width: video.clientWidth, height: video.clientHeight };
+                faceapi.matchDimensions(canvas, newSize);
+            });
 
-    function deleteFace() {
-        if(confirm("هل تريد حذف البصمة والبدء من جديد؟")) {
-            localStorage.removeItem('face_image_data');
-            location.reload();
-        }
-    }
+            setInterval(async () => {
+                if (isProcessing || !faceMatcher) return;
 
-    startApp();
-</script>
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                const currentSize = { width: video.clientWidth, height: video.clientHeight };
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+
+                if (detection) {
+                    const resizedDetection = faceapi.resizeResults(detection, currentSize);
+                    faceapi.draw.drawDetections(canvas, resizedDetection);
+
+                    const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+
+                    if (bestMatch.label !== 'unknown') {
+                        isProcessing = true;
+                        handleStudentDetected(bestMatch.label);
+                    } else {
+                        statusDiv.innerText = "جاري الفحص... وجه غير مطابق لقاعدة البيانات.";
+                    }
+                }
+            }, 800);
+        });
+
+        // 4. معالجة الطالب المتطابق وجلب مقعده
+        async function handleStudentDetected(labelDataString) {
+            statusDiv.innerText = "تم التعرف على الوجه، جاري تجهيز المقعد...";
+            statusDiv.classList.add('loading');
+            
+            const studentInfo = JSON.parse(labelDataString);
+            
+            document.getElementById('s-name').innerText = studentInfo.name;
+            document.getElementById('s-dept').innerText = studentInfo.dept;
+            document.getElementById('s-room').innerText = "جاري البحث...";
+            document.getElementById('s-seat').innerText = "جاري البحث...";
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 'action': 'assignSeat', 'studentId': studentInfo.id })
+                });
+                
+                const result = await response.json();
+
+                if (result.error) {
+                    statusDiv.innerText = result.error;
+                } else {
+                    document.getElementById('s-room').innerText = result.room;
+                    document.getElementById('s-seat').innerText = result.seat;
+                    statusDiv.innerText = result.message ? result.message : "تم التوجيه بنجاح!";
+                }
+            } catch (error) {
+                statusDiv.innerText = "خطأ في الاتصال بالسيرفر. يرجى المحاولة مرة أخرى.";
+            }
+
+            statusDiv.classList.remove('loading');
+            
+            setTimeout(() => {
+                document.getElementById('s-name').innerText = "--";
+                document.getElementById('s-dept').innerText = "--";
+                document.getElementById('s-room').innerText = "--";
+                document.getElementById('s-seat').innerText = "--";
+                statusDiv.innerText = "النظام جاهز. يرجى الوقوف أمام الكاميرا.";
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); 
+                isProcessing = false;
+            }, 8000);
+        }
+
+        // التأكد من تحميل المكتبة بالكامل قبل تشغيل النظام
+        window.addEventListener('load', () => {
+            if (typeof faceapi !== 'undefined') {
+                initialize();
+            } else {
+                statusDiv.innerText = "عذراً، لم يتم تحميل مكتبة الوجه. يرجى تحديث الصفحة أو التحقق من اتصالك.";
+                statusDiv.style.color = "#ff4d4d";
+                statusDiv.classList.remove('loading');
+            }
+        });
+    </script>
 </body>
-</html>ئ
+</html>
