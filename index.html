@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>البوابة الذكية</title>
+    <title>البوابة الذكية - توجيه الطلاب</title>
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         /* إعدادات المظهر الزجاجي ومنع النسخ التام */
@@ -140,7 +140,7 @@
         document.addEventListener('dragstart', function(e) { e.preventDefault(); });
 
         // === إعدادات النظام والرابط ===
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzEjmJzZEFQ60eBzocEvXivv3hbYK_jRQMiSOQNEgis1K5sfJDOog22L4ha79AXrESY/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T-12TCX-479TCluhUQ9QQQa-KCdKFkJHPHJo_XMZ3FPkAQT9odJE7YZll1qcBfep/exec";
         
         const video = document.getElementById('video');
         const statusDiv = document.getElementById('status');
@@ -205,9 +205,9 @@
             }
         }
 
-        // 2. تشغيل الكاميرا
+        // 2. تشغيل الكاميرا (تم التعديل لاستخدام الكاميرا الخلفية)
         function startVideo() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
                 .then(stream => { video.srcObject = stream; })
                 .catch(err => { statusDiv.innerText = "خطأ: تعذر الوصول إلى الكاميرا. تأكد من إعطاء الصلاحيات."; });
         }
