@@ -6,7 +6,6 @@
     <title>البوابة الذكية - توجيه الطلاب</title>
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        /* إعدادات المظهر الزجاجي ومنع النسخ التام */
         * { 
             box-sizing: border-box; 
             user-select: none !important; 
@@ -43,7 +42,6 @@
             max-width: 1000px;
         }
 
-        /* حاوية الكاميرا المتجاوبة */
         .camera-glass {
             background: rgba(255, 255, 255, 0.05); 
             backdrop-filter: blur(15px);
@@ -64,7 +62,6 @@
         #video { border-radius: 15px; width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 15px; left: 15px; width: calc(100% - 30px); height: calc(100% - 30px); pointer-events: none; }
 
-        /* حاوية معلومات الطالب */
         .info-glass {
             background: rgba(0, 0, 0, 0.4); 
             backdrop-filter: blur(20px);
@@ -128,7 +125,6 @@
     <div id="status" class="loading">جاري تهيئة النظام وتحميل مكتبة الذكاء الاصطناعي...</div>
 
     <script>
-        // === أكواد الحماية الإضافية لمنع الاختراقات والنسخ ===
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F12' || 
                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
@@ -139,7 +135,6 @@
         });
         document.addEventListener('dragstart', function(e) { e.preventDefault(); });
 
-        // === إعدادات النظام والرابط ===
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_T-12TCX-479TCluhUQ9QQQa-KCdKFkJHPHJo_XMZ3FPkAQT9odJE7YZll1qcBfep/exec";
         
         const video = document.getElementById('video');
@@ -147,7 +142,6 @@
         let faceMatcher = null;
         let isProcessing = false;
 
-        // 1. تحميل الموديلات وجلب بيانات الطلاب مع صائد الأخطاء
         async function initialize() {
             try {
                 const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
@@ -205,14 +199,27 @@
             }
         }
 
-        // 2. تشغيل الكاميرا (تم التعديل لاستخدام الكاميرا الخلفية)
-        function startVideo() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(stream => { video.srcObject = stream; })
-                .catch(err => { statusDiv.innerText = "خطأ: تعذر الوصول إلى الكاميرا. تأكد من إعطاء الصلاحيات."; });
+        // 2. تشغيل الكاميرا (إجبار المتصفح على الكاميرا الخلفية)
+        async function startVideo() {
+            try {
+                // المحاولة الأولى: إجبار الهاتف على فتح الكاميرا الخلفية تحديداً (exact)
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: { exact: "environment" } } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                // المحاولة الثانية (كخطة بديلة): إذا كان الجهاز لا يدعم التحديد الإجباري (مثل اللابتوب)
+                try {
+                    const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "environment" } 
+                    });
+                    video.srcObject = fallbackStream;
+                } catch (fallbackErr) {
+                    statusDiv.innerText = "خطأ: تعذر الوصول إلى الكاميرا الخلفية. تأكد من إعطاء الصلاحيات.";
+                }
+            }
         }
 
-        // 3. تحليل الوجوه والمطابقة المباشرة
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('video-container').append(canvas);
@@ -251,7 +258,6 @@
             }, 800);
         });
 
-        // 4. معالجة الطالب المتطابق وجلب مقعده
         async function handleStudentDetected(labelDataString) {
             statusDiv.innerText = "تم التعرف على الوجه، جاري تجهيز المقعد...";
             statusDiv.classList.add('loading');
@@ -296,7 +302,6 @@
             }, 8000);
         }
 
-        // التأكد من تحميل المكتبة بالكامل قبل تشغيل النظام
         window.addEventListener('load', () => {
             if (typeof faceapi !== 'undefined') {
                 initialize();
