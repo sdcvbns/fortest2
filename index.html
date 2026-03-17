@@ -6,6 +6,9 @@
     <title>البوابة الذكية - توجيه الطلاب</title>
     <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
+        /* --- الإعدادات الأساسية والخطوط --- */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap');
+
         * { 
             box-sizing: border-box; 
             user-select: none !important; 
@@ -13,14 +16,17 @@
             -moz-user-select: none !important; 
             -ms-user-select: none !important;
             -webkit-touch-callout: none !important;
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;
         }
         
+        /* --- خلفية متحركة احترافية --- */
         body {
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: white; 
+            background: linear-gradient(-45deg, #091316, #142830, #1c3b47, #071b24);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #ffffff; 
             margin: 0; 
-            padding: 20px 0;
+            padding: 3vh 0;
             display: flex; 
             flex-direction: column;
             align-items: center; 
@@ -29,77 +35,258 @@
             overflow-x: hidden;
         }
 
-        .header { margin-bottom: 20px; text-align: center; width: 90%; }
-        .header h1 { color: #00d2ff; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); margin: 0; font-size: clamp(1.5rem, 4vw, 2.5rem); }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- ترويسة الصفحة (العنوان) --- */
+        .header { 
+            margin-bottom: 30px; 
+            text-align: center; 
+            width: 90%; 
+            animation: fadeInDown 1s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform, opacity;
+        }
+        .header h1 { 
+            color: #00d2ff; 
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.6), 0 0 30px rgba(0, 210, 255, 0.2); 
+            margin: 0; 
+            font-size: clamp(1.5rem, 5vw, 2.8rem); 
+            letter-spacing: 1px;
+            font-weight: 800;
+        }
         
+        /* --- الحاوية الرئيسية المتجاوبة --- */
         .main-container {
             display: flex; 
             flex-wrap: wrap; 
             justify-content: center; 
-            align-items: stretch;
-            gap: 20px; 
-            width: 95%; 
-            max-width: 1000px;
+            align-items: center;
+            gap: 25px; 
+            width: 100%; 
+            padding: 0 15px;
+            max-width: 1100px;
+            perspective: 1000px;
         }
 
+        /* --- تصميم حاوية الكاميرا --- */
         .camera-glass {
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            border-radius: 20px;
+            flex: 1 1 400px; /* يتمدد وينكمش حسب الشاشة */
+            background: rgba(15, 32, 39, 0.6); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 210, 255, 0.2); 
+            border-radius: 24px;
             padding: 15px; 
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 210, 255, 0.1);
             position: relative; 
             width: 100%; 
-            max-width: 450px; 
+            max-width: 500px; 
             aspect-ratio: 4/3; 
             display: flex;
             justify-content: center; 
             align-items: center; 
             overflow: hidden;
+            animation: slideInRight 1s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform, opacity;
         }
-        #video { border-radius: 15px; width: 100%; height: 100%; object-fit: cover; }
-        canvas { position: absolute; top: 15px; left: 15px; width: calc(100% - 30px); height: calc(100% - 30px); pointer-events: none; }
-
-        .info-glass {
-            background: rgba(0, 0, 0, 0.4); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 210, 255, 0.3); 
-            border-radius: 20px;
-            padding: 20px; 
-            box-shadow: 0 8px 32px 0 rgba(0, 210, 255, 0.1);
+        
+        #video { 
+            border-radius: 16px; 
             width: 100%; 
-            max-width: 450px; 
-            text-align: center; 
+            height: 100%; 
+            object-fit: cover; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.8) inset;
+        }
+        canvas { 
+            position: absolute; 
+            top: 15px; 
+            left: 15px; 
+            width: calc(100% - 30px); 
+            height: calc(100% - 30px); 
+            pointer-events: none; 
+            z-index: 5;
+        }
+
+        /* --- تأثير ليزر المسح الضوئي الانسيابي --- */
+        .scanner-laser {
+            position: absolute;
+            left: 15px;
+            width: calc(100% - 30px);
+            height: 3px;
+            background: #00d2ff;
+            box-shadow: 0 0 15px #00d2ff, 0 0 30px #00d2ff;
+            animation: scanning 2.5s infinite ease-in-out alternate;
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 50%;
+            opacity: 0.8;
+            will-change: top;
+        }
+
+        @keyframes scanning {
+            0% { top: 15px; }
+            100% { top: calc(100% - 18px); } /* يتكيف مع أي طول للشاشة */
+        }
+
+        /* --- لوحة البيانات (بطاقة معلومات الطالب) --- */
+        .info-glass {
+            flex: 1 1 400px; /* يتمدد وينكمش حسب الشاشة */
+            background: linear-gradient(135deg, rgba(20, 40, 50, 0.8), rgba(10, 20, 25, 0.9));
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 210, 255, 0.2); 
+            border-top: 1px solid rgba(0, 210, 255, 0.5);
+            border-radius: 24px;
+            padding: 25px; 
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            width: 100%; 
+            max-width: 500px; 
             display: flex; 
             flex-direction: column;
             justify-content: center;
+            animation: slideInLeft 1s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+            will-change: transform, opacity;
         }
-        .info-glass h2 { color: #fff; margin-top: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
+
+        .info-glass::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(0,210,255,0.05) 0%, transparent 60%);
+            animation: rotateGlow 12s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg) translateZ(0); }
+            100% { transform: rotate(360deg) translateZ(0); }
+        }
+
+        .info-glass h2 { 
+            color: #fff; 
+            margin-top: 0; 
+            margin-bottom: 20px;
+            font-size: clamp(1.3rem, 4vw, 1.8rem); 
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* --- تصميم صفوف البيانات سلس الاستجابة --- */
         .data-row { 
-            margin: 10px 0; 
-            font-size: clamp(1rem, 2.5vw, 1.2rem); 
-            background: rgba(255,255,255,0.05); 
-            padding: 12px; 
-            border-radius: 10px; 
+            position: relative;
+            z-index: 1;
+            margin: 8px 0; 
+            font-size: clamp(1rem, 3vw, 1.2rem); 
+            background: rgba(255, 255, 255, 0.03); 
+            padding: 12px 18px; 
+            border-radius: 12px; 
+            border-right: 4px solid #00d2ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease, border-color 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            will-change: transform;
         }
-        .highlight { color: #00d2ff; font-weight: bold; font-size: 1.2em; }
-        .highlight-seat { color: #ffcc00; font-weight: bold; font-size: 1.5em; text-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+
+        .data-row:hover {
+            background: rgba(0, 210, 255, 0.08);
+            transform: translateX(-6px);
+            border-right-color: #ffcc00;
+        }
+
+        .data-label {
+            color: #b0c4de;
+            font-weight: bold;
+        }
+
+        .highlight { 
+            color: #00d2ff; 
+            font-weight: 800; 
+            font-size: 1.05em; 
+            text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+            text-align: left;
+        }
         
+        .highlight-seat { 
+            color: #ffcc00; 
+            font-weight: 800; 
+            font-size: 1.2em; 
+            text-shadow: 0 0 15px rgba(255, 204, 0, 0.6); 
+            background: rgba(255, 204, 0, 0.1);
+            padding: 2px 10px;
+            border-radius: 8px;
+        }
+        
+        /* --- شريط الحالة --- */
         #status { 
-            margin-top: 20px; 
-            font-size: clamp(0.9rem, 2.5vw, 1.1rem); 
-            color: #aaa; 
+            margin-top: 30px; 
+            font-size: clamp(0.95rem, 2.5vw, 1.2rem); 
+            color: #e0e0e0; 
             text-align: center; 
             width: 90%; 
-            padding: 10px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.2);
+            max-width: 800px;
+            padding: 12px 20px;
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+            backdrop-filter: blur(10px);
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            will-change: transform, opacity, box-shadow;
         }
-        .loading { animation: pulse 1.5s infinite; color: #00d2ff !important; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        .loading { 
+            animation: pulseGlow 1.5s infinite ease-in-out !important; 
+            color: #00d2ff !important; 
+            border-color: rgba(0, 210, 255, 0.4) !important;
+        }
+
+        /* --- حركات الدخول الأساسية الناعمة --- */
+        @keyframes pulseGlow { 
+            0% { box-shadow: 0 0 10px rgba(0,210,255,0.2); opacity: 0.85; } 
+            50% { box-shadow: 0 0 25px rgba(0,210,255,0.6); opacity: 1; } 
+            100% { box-shadow: 0 0 10px rgba(0,210,255,0.2); opacity: 0.85; } 
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- تحسينات خاصة بالشاشات الصغيرة جداً (الهواتف) --- */
+        @media (max-width: 450px) {
+            .data-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .highlight, .highlight-seat {
+                align-self: flex-end;
+            }
+        }
     </style>
 </head>
 <body oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
@@ -111,14 +298,27 @@
     <div class="main-container">
         <div class="camera-glass" id="video-container">
             <video id="video" autoplay muted playsinline></video>
+            <div class="scanner-laser"></div>
         </div>
 
         <div class="info-glass" id="info-panel">
             <h2>بيانات الطالب</h2>
-            <div class="data-row">الاسم: <span id="s-name" class="highlight">--</span></div>
-            <div class="data-row">الاختصاص: <span id="s-dept" class="highlight">--</span></div>
-            <div class="data-row">القاعة: <span id="s-room" class="highlight-seat">--</span></div>
-            <div class="data-row">المقعد: <span id="s-seat" class="highlight-seat">--</span></div>
+            <div class="data-row">
+                <span class="data-label">الاسم:</span> 
+                <span id="s-name" class="highlight">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">الاختصاص:</span> 
+                <span id="s-dept" class="highlight">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">القاعة:</span> 
+                <span id="s-room" class="highlight-seat">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">المقعد:</span> 
+                <span id="s-seat" class="highlight-seat">--</span>
+            </div>
         </div>
     </div>
     
